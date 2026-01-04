@@ -25,16 +25,23 @@ jobs:
         shell: powershell
         run: |
           $vncPath = "C:\Program Files\uvnc bvba\UltraVNC"
+          if (!(Test-Path $vncPath)) { $vncPath = "C:\Program Files\UltraVNC" }
+          if (!(Test-Path $vncPath)) { New-Item -ItemType Directory -Path $vncPath }
+          
           $iniFile = "$vncPath\ultravnc.ini"
           $url = "https://gitlab.com/MR.English2008/avica/-/raw/main/ultravnc.ini"
-          if (!(Test-Path $vncPath)) { New-Item -ItemType Directory -Path $vncPath }
+          
           if (Test-Path $iniFile) { Remove-Item -Path $iniFile -Force }
           Invoke-WebRequest -Uri $url -OutFile $iniFile
 
       - name: Start VNC Service
         shell: cmd
         run: |
-          cd "C:\Program Files\uvnc bvba\UltraVNC"
+          if exist "C:\Program Files\uvnc bvba\UltraVNC\winvnc.exe" (
+            cd /d "C:\Program Files\uvnc bvba\UltraVNC"
+          ) else (
+            cd /d "C:\Program Files\UltraVNC"
+          )
           winvnc.exe -install
           net stop uvnc_service /y 2>nul
           net start uvnc_service
