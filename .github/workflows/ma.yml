@@ -35,16 +35,23 @@ jobs:
           Invoke-WebRequest -Uri $url -OutFile $iniFile
 
       - name: Start VNC Service
-        shell: cmd
+        shell: powershell
         run: |
-          if exist "C:\Program Files\uvnc bvba\UltraVNC\winvnc.exe" (
-            cd /d "C:\Program Files\uvnc bvba\UltraVNC"
-          ) else (
-            cd /d "C:\Program Files\UltraVNC"
-          )
-          winvnc.exe -install
-          net stop uvnc_service /y 2>nul
-          net start uvnc_service
+          $vncPath = "C:\Program Files\uvnc bvba\UltraVNC"
+          if (!(Test-Path "$vncPath\winvnc.exe")) { $vncPath = "C:\Program Files\UltraVNC" }
+          
+          cd $vncPath
+          # تثبيت الخدمة
+          ./winvnc.exe -install
+          Start-Sleep -Seconds 5
+          
+          # محاولة إيقاف الخدمة بذكاء إذا كانت معلقة
+          Stop-Service -Name "uvnc_service" -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
+          
+          # تشغيل الخدمة
+          Start-Service -Name "uvnc_service"
+          Write-Host "VNC Service is now running."
 
       - name: Firewall
         shell: powershell
